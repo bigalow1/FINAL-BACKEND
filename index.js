@@ -30,6 +30,10 @@ app.use(e.urlencoded({ extended: true }));
 
 app.use(e.static("./box"));
 
+
+
+
+
 // app.use(
 //   cors({
 //     origin: ["http://localhost:5173"],
@@ -37,16 +41,42 @@ app.use(e.static("./box"));
 //   })
 // );
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "box", "index.html"));
-});
+// app.get("/", (req, res) => {
+//   res.sendFile(path.join(__dirname, "box", "index.html"));
+// });
 
 app.use("/user", userRoutes);
 
 app.use("/restaurant", restaurantRoutes);
 app.use("/menus", menusRoutes);
 
-app.listen(port, () => {
-  console.log(`server is runninng on port : ${port}`);
-  
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",         // local dev
+      "https://final-backend-57f6.onrender.com.com", // deployed frontend URL (replace with yours)
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+app.use(cors()); // allows all origins (not safe for production)
+
+
+// app.use(express.json());
+
+// Example route
+// app.get("/menus", (req, res) => {
+//   res.json([{ menuname: "Pizza", menuprice: 15 }]);
+// });
+
+// ✅ use Render’s port
+const PORT = process.env.PORT || 3002;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
+
+// app.listen(port, () => {
+//   console.log(`server is runninng on port : ${port}`);
+  
+// });

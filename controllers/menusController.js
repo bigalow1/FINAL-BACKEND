@@ -33,7 +33,7 @@ const createMenu = async (req, res) => {
 
 const getAllMenus = async (req, res) => {
   const myMenus = await menus.find().populate({
-    path: "author",
+    path: "restaurantId",
     select: "restaurantname",
   });
 
@@ -46,7 +46,7 @@ const get1Menu = async (req, res) => {
   let { id } = req.params;
 
   const oneMenu = await menus.findById(id).populate({
-    path: "author",
+    path: "restaurantId",
     select: "restaurantname",
   });
 
