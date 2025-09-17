@@ -1,27 +1,12 @@
 import mongoose from "mongoose";
-const Schema = mongoose.Schema;
 
-const menusSchema = Schema({
-    menupicture: {
-        type: String, 
-        default: "https://res.cloudinary.com/dz1qj0x2f/image/upload/v1735681234/connection/default-profile-picture.png"
-    },
-    menuname:{
-        type: String, 
-        require: true 
-    },
-    menudescription:{
-        type: String, 
-        require: true 
-    },
-    menuprice:{
-        type: Number, 
-        require: true
-    },
-    
-    
-},{timestamps: true})
+const menuSchema = new mongoose.Schema({
+  menuPicture: { type: String, alias: "menupicture" }, // ✅ old key supported
+  menuName: { type: String, required: true, alias: "menuname" },
+  menuDescription: { type: String, required: true, alias: "menudescription" },
+  menuPrice: { type: Number, required: true, alias: "menuprice" },
+  
+  restaurant: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant" },
+});
 
-const menus = mongoose.model('Menus', menusSchema);
-
-export default menus;
+export default mongoose.model("Menu", menuSchema);

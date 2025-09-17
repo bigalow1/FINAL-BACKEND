@@ -13,7 +13,7 @@ router.get('/:id', get1User)
 
 router.delete('/:id',authorize(['Admin']), del1User)
 
-router.put('/:id', update1User) 
+router.put('/:id', update1User)
 
 
 

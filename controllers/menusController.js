@@ -1,80 +1,120 @@
 import menus from "../models/menus.js";
 import restaurant from "../models/restaurant.js";
 
-const createMenu = async (req, res) => {
+// CREATE a menu under a restaurant
+export const newMenu = async (req, res) => {
   try {
-    let { menupicture, menuname,menudescription, menuprice, } = req.body;
-    let { restaurantId } = req.params;
-    if (!menupicture || !menuname || !menudescription || !menuprice) {
+    console.log("FormData Body:", req.body);
+    console.log("Uploaded File:", req.file); // ✅ Cloudinary file info
+    const { restaurantId } = req.params;
+    const { menuName, menuDescription, menuPrice } = req.body;  
+    if (!menuName || !menuDescription || !menuPrice) {
       return res.status(400).json({ message: "All fields are required" });
     }
-
-   let checkRestaurant = await restaurant.findById(restaurantId);
-    if(!checkRestaurant) return res.status(404).json({message:"No restaurant found"});
-    
-
-    const newMenu = await menus.create({
-      menupicture,
-      menuname,
-      menudescription,
-      menuprice,
+    const rest = await restaurant.findById(restaurantId);
+    if (!rest) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    } 
+    const menu = await menus.create({
+      menuName,
+      menuDescription,
+      menuPrice,
+      menuPicture: req.file?.path || null, // ✅ Cloudinary URL
       restaurant: restaurantId,
     });
+    // ✅ Add menu to restaurant's menus array
+    rest.menus.push(menu._id);
+    await rest.save();
+    res.status(201).json(menu);
+  }
+  catch (error) {
+    console.error("Error creating menu:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
 
-    checkRestaurant.menus.push(newMenu._id);
-    await checkRestaurant.save();
 
-    res.status(201).json({ message: "Menu created successfully" });
+
+
+// GET all menus (with restaurant info)
+export const getAllMenus = async (req, res) => {
+  try {
+    const myMenus = await menus.find().populate({
+      path: "restaurant",
+      select: "restaurantname",
+    });
+
+    if (!myMenus.length) {
+      return res.status(404).json({ message: "No menus found" });
+    }
+
+    res.status(200).json(myMenus);
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching menus:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
-const getAllMenus = async (req, res) => {
-  const myMenus = await menus.find().populate({
-    path: "restaurantId",
-    select: "restaurantname",
-  });
+// GET one menu
+export const get1Menu = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  if (!myMenus) return res.status(404).json({ message: "No menu found" });
+    const oneMenu = await menus.findById(id).populate({
+      path: "restaurant",
+      select: "restaurantname",
+    });
 
-  res.status(200).send(myMenus);
+    if (!oneMenu) {
+      return res.status(404).json({ message: "Menu not found" });
+    }
+
+    res.status(200).json(oneMenu);
+  } catch (error) {
+    console.error("Error fetching menu:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-const get1Menu = async (req, res) => {
-  let { id } = req.params;
+// DELETE a menu
+export const del1Menu = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  const oneMenu = await menus.findById(id).populate({
-    path: "restaurantId",
-    select: "restaurantname",
-  });
+    const deletedMenu = await menus.findByIdAndDelete(id);
+    if (!deletedMenu) {
+      return res.status(404).json({ message: "Menu not found" });
+    }
 
-  if (!oneMenu) return res.status(404).json({ message: "No menu found" });
+    // ✅ Remove from restaurant's menu array
+    await restaurant.findByIdAndUpdate(deletedMenu.restaurant, {
+      $pull: { menus: id },
+    });
 
-  res.status(200).send(oneMenu);
+    res.status(200).json({ message: "Menu deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting menu:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
-const del1Menu = async (req, res) => {
-  let { id } = req.params;
+// UPDATE a menu
+export const update1Menu = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const newData = req.body;
 
-  const deletedMenu = await menus.findByIdAndDelete(id);
+    const updatedMenu = await menus.findByIdAndUpdate(id, newData, { new: true });
+    if (!updatedMenu) {
+      return res.status(404).json({ message: "Menu not found" });
+    }
 
-  if (!deletedMenu) return res.status(404).json({ message: "No menu found" });
-
-  res.status(200).json({ messgae: "Menu deleted successfully" });
+    res.status(200).json({
+      message: "Menu updated successfully",
+      menu: updatedMenu,
+    });
+  } catch (error) {
+    console.error("Error updating menu:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
-
-const update1Menu = async (req, res) => {
-  let { id } = req.params;
-
-  let newData = req.body;
-
-  let updatedMenu = await menus.findByIdAndUpdate(id, newData, { new: true });
-
-  if (!updatedMenu) return res.status(404).json({ message: "Menu not found" });
-
-  res.status(200).json({ messgae: "Menu updated successfully" });
-};
-
-export { getAllMenus, get1Menu, del1Menu, update1Menu, createMenu };

@@ -1,13 +1,15 @@
-import express from 'express';
+import express from "express";
+import { authenticate, authorizeRole } from "../middleware/auth.js";
+import { getAllUsers } from "../controllers/usercontroller.js";
+import { approveRestaurant, rejectRestaurant } from "../controllers/restaurantController.js";
 
 const router = express.Router();
-const AdminController = require('../controllers/AdminController');
-const { authenticate, authorizeRole } = require('../middlewares/authMiddlewares');
 
-// Get all unapproved vendors
-router.get('/vendors/pending', authenticate, authorizeRole('Admin'), AdminController.getPendingVendors);
+// ✅ Only Admins can see all users
+router.get("/users", authenticate, authorizeRole("Admin"), getAllUsers);
 
-// Approve a vendor
-router.patch('/vendors/:vendorId/approve', authenticate, authorizeRole('Admin'), AdminController.approveVendor);
+// ✅ Only Admins can approve/reject restaurants
+router.put("/restaurants/:id/approve", authenticate, authorizeRole("Admin"), approveRestaurant);
+router.put("/restaurants/:id/reject", authenticate, authorizeRole("Admin"), rejectRestaurant);
 
-module.exports = router;
+export default router;

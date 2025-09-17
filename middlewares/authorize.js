@@ -1,34 +1,47 @@
-import e from 'express';
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
-const authorize =(allowedRoles) => (req, res, next) =>{
-    // const token = req.headers.authorization?.split(' ')[1];
-    const token = req.cookies.token; 
-
-    if(!token) {
-        return res.status(401).json({message: "unauthorized access, No token provided"});
-    }
-
+const authorize = (allowedRoles = []) => {
+  return (req, res, next) => {
     try {
-        const decoded = jwt.verify(token, process.env.SECRET_KEY);
-        req.user =decoded;
-        
+      let token;
 
-        // check if the user's role is allowed
-        if (!allowedRoles.includes(decoded.role)){
-            return res.status (403).json({message:"Forbidden: you do not have permission to access this resource"});
+      // ✅ Check cookies
+      if (req.cookies?.token) {
+        token = req.cookies.token;
+      }
+
+      // ✅ Or check Authorization header
+      if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+        token = req.headers.authorization.split(" ")[1];
+      }
+
+      if (!token) {
+        return res.status(401).json({ message: "No token provided pls login" });
+      }
+
+      // Verify token
+      jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(403).json({ message: "Invalid or expired token" });
+        }
+
+        req.user = decoded;
+        console.log(decoded)
+
+        // ✅ Optional role check
+        if (allowedRoles.includes(decoded.role)) {
+          return res
+            .status(403)
+            .json({ message: "Forbidden: Insufficient role" });
         }
 
         next();
-    } catch (error){
-        console.log("Token verification error: ", error.message);
-         
-        if(error.name === "TokenExpiredError"){
-            return res.status(401).json({message: "Token expired.please log in again."});
-        }
-        return res.status(401).json({message: "Invalid token.please log in again"});
+      });
+    } catch (error) {
+      console.error("Authorize middleware error:", error.message);
+      return res.status(500).json({ message: "Internal server error" });
     }
-
-}
+  };
+};
 
 export default authorize;
