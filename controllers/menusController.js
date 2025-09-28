@@ -2,34 +2,33 @@ import menus from "../models/menus.js";
 import restaurant from "../models/restaurant.js";
 
 // CREATE a menu under a restaurant
-export const newMenu = async (req, res) => {
+export const newMenu= async (req, res) => {
   try {
-    console.log("FormData Body:", req.body);
-    console.log("Uploaded File:", req.file); // ✅ Cloudinary file info
-    const { restaurantId } = req.params;
-    const { menuName, menuDescription, menuPrice } = req.body;  
-    if (!menuName || !menuDescription || !menuPrice) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-    const rest = await restaurant.findById(restaurantId);
-    if (!rest) {
+    const { id } = req.params;
+    const { menuName, menuDescription, menuPrice } = req.body;
+
+    const restaurant = await Restaurant.findById(id);
+    if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found" });
-    } 
-    const menu = await menus.create({
+    }
+
+    const newMenu =  menus({
       menuName,
       menuDescription,
       menuPrice,
-      menuPicture: req.file?.path || null, // ✅ Cloudinary URL
-      restaurant: restaurantId,
+      menuPicture: req.file ? req.file.path : null, // ✅ handle no file
+      restaurant: id,
     });
-    // ✅ Add menu to restaurant's menus array
-    rest.menus.push(menu._id);
-    await rest.save();
-    res.status(201).json(menu);
-  }
-  catch (error) {
-    console.error("Error creating menu:", error);
-    res.status(400).json({ message: error.message });
+
+    await newMenu.save();
+
+    restaurant.menus.push(newMenu._id);
+    await restaurant.save();
+
+    res.status(201).json({ success: true, menu: newMenu });
+  } catch (err) {
+    console.error("❌ Add menu error:", err.message);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 

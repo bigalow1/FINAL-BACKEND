@@ -1,9 +1,13 @@
 import express from "express";
+import dotenv from "dotenv";
+dotenv.config();
 import mongoose from "mongoose";
 import cors from "cors";
-import dotenv from "dotenv";
+
 import cookieParser from "cookie-parser";
 import path from "path";
+
+
 
 // Import routes
 import userRoutes from "./routes/userRoutes.js";
@@ -14,8 +18,6 @@ import ordersRoutes from "./routes/ordersRoutes.js";
 // Import models
 import Restaurant from "./models/restaurant.js";
 import Menu from "./models/menus.js";
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -28,13 +30,19 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// allow all origins (development only)
-app.use(cors({
-  origin: "*", // or ["http://localhost:5173", "https://your-frontend-domain.com"]
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
 
+// // ✅ CORS
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173", // local dev
+      "https://final-backend-57f6.onrender.com", // frontend Render URL
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
 // ✅ Restaurants (fetch all)
 app.get("/all", async (req, res) => {

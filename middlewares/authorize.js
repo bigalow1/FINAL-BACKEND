@@ -16,23 +16,21 @@ const authorize = (allowedRoles = []) => {
       }
 
       if (!token) {
-        return res.status(401).json({ message: "No token provided pls login" });
+        return res.status(401).json({ message: "No token provided, please login" });
       }
 
-      // Verify token
+      // ✅ Verify token
       jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
           return res.status(403).json({ message: "Invalid or expired token" });
         }
 
         req.user = decoded;
-        console.log(decoded)
+        console.log("✅ Authorized user:", decoded);
 
         // ✅ Optional role check
-        if (allowedRoles.includes(decoded.role)) {
-          return res
-            .status(403)
-            .json({ message: "Forbidden: Insufficient role" });
+        if (allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {
+          return res.status(403).json({ message: "Forbidden: Insufficient role" });
         }
 
         next();

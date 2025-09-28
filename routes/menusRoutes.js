@@ -9,6 +9,7 @@ import {
   update1Menu,
 } from "../controllers/menusController.js";
 import authorize from "../middlewares/authorize.js";
+import menus from "../models/menus.js";
 
 const router = express.Router();
 
@@ -39,8 +40,8 @@ router.get("/", async (req, res) => {
     const skip = (page - 1) * limit;
 
     // ✅ Use the real mongoose model
-    const items = await Menu.find().skip(skip).limit(limit);
-    const total = await Menu.countDocuments();
+    const items = await menus.find().skip(skip).limit(limit);
+    const total = await menus.countDocuments();
 
     // ✅ Convert picture path to full URL
     const host = `${req.protocol}://${req.get("host")}`;

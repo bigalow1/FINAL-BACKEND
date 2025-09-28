@@ -25,15 +25,16 @@ export const createRestaurant = async (req, res) => {
 
 
 // 📖 Get all restaurants (with menus)
-export const getAllRestaurants = async (req, res) => {
+// Example using Mongoose populate
+export const getRestaurant = async (req, res) => {
   try {
-    const restaurants = await restaurant.find().populate("menus");
-    res.json(restaurants);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const restaurant = await Restaurant.findById(id).populate("menus");
+    if (!restaurant) return res.status(404).json({ message: "Restaurant not found" });
+    res.json(restaurant);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
 
 // 📖 Get 1 restaurant by ID
 export const get1Restaurant = async (req, res) => {
